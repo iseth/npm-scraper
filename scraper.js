@@ -19,7 +19,7 @@ async function makeRequestWithRetry(url, retries = 5, backoff = 3000) {
         const response = await axios.get(url, {
             responseType: 'stream' // This ensures we get the data as a stream
         });
-        return response.data;
+        return response;
     } catch (error) {
         if (error.response && error.response.status === 429) {
             if (retries) {
@@ -45,8 +45,10 @@ async function downloadFile(packageName, fileMetadata, downloadDirectory) {
     // Make a GET request to the actual file download endpoint
     const url = `https://www.npmjs.com/package/${packageName}/file/${fileMetadata.hex}`;
     try {
-        const response = makeRequestWithRetry(url);
-        // console.log(response);
+        // const response = await axios.get(url, {
+        //     responseType: 'stream' // This ensures we get the data as a stream
+        // });
+        const response = await makeRequestWithRetry(url);
 
         // Ensure download directory exists
         fs.mkdirSync(downloadDirectory, { recursive: true });
@@ -58,6 +60,7 @@ async function downloadFile(packageName, fileMetadata, downloadDirectory) {
 
         const writer = fs.createWriteStream(filePath);
         response.data.pipe(writer);
+        console.log(`Downloading ${fileMetadata.path}...`);
 
         return new Promise((resolve, reject) => {
             writer.on('finish', resolve);
